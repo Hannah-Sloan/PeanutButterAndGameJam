@@ -7,18 +7,35 @@ public class PlayerController : MonoBehaviour
     private new Rigidbody2D rigidbody;
     private new Collider2D collider;
 
-    [Range(0, 1)]
-    [SerializeField] private float groundCheckDist;
+    private float groundCheckDist = 0.3f;
+
+    [Header("Refs")]
+    [SerializeField] private SpriteRenderer sprite;
+
 
     [Space(10)]
 
-    [Range(0, 10)]
-    [SerializeField] private float moveSpeed;
+
+    [Header("Move")]
+
+    [Range(10f, 50f)]
+    [SerializeField] private float accelerateSpeed;
+    [Range(10f, 100f)]
+    [SerializeField] private float decelerateSpeed;
+    [Range(1, 10)]
+    [SerializeField] private float maxSpeed;
+
+
+    [Space(10)]
+
+
+    [Header("Jump")]
+
     [Range(0,10)]
     [SerializeField] private float jumpVelocity;
-    //[Range(1,3)]
+    [Range(1,10)]
     [SerializeField] private float gravityFallMultiplier;
-    //[Range(1, 3)]
+    [Range(1, 10)]
     [SerializeField] private float lowJumpGravityMultiplier;
 
     private void Awake()
@@ -29,23 +46,38 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        //Jump
-        if (Input.GetKeyDown(KeyCode.Space) && IsGrounded()) 
-        {
-            rigidbody.velocity += Vector2.up * jumpVelocity;
-        }
-
         //Left Right
-        if (Input.GetKey(KeyCode.A))
+        float moveX = Input.GetAxis("Horizontal");
+        //Debug.DrawRay(transform.position, moveX * Vector2.right * maxSpeed, Color.blue);
+
+        if ((Mathf.Sign(rigidbody.velocity.x) == Mathf.Sign(moveX) || rigidbody.velocity.x == 0) && moveX != 0)
         {
-            rigidbody.velocity = Vector2.left * moveSpeed + Vector2.up * rigidbody.velocity;
+            rigidbody.velocity += Vector2.right * Mathf.Sign(rigidbody.velocity.x) * Mathf.Min(accelerateSpeed * Time.deltaTime, maxSpeed - Mathf.Abs(rigidbody.velocity.x));
+            sprite.color = Color.yellow;
         }
-        if (Input.GetKey(KeyCode.D))
+        else 
         {
-            rigidbody.velocity = Vector2.right * moveSpeed + Vector2.up * rigidbody.velocity;
+            if (decelerateSpeed * Time.deltaTime > Mathf.Abs(rigidbody.velocity.x))
+                rigidbody.velocity = new Vector2(0, rigidbody.velocity.y);
+            else
+                rigidbody.velocity += Vector2.right * -Mathf.Sign(rigidbody.velocity.x) * decelerateSpeed * Time.deltaTime;
+
+            sprite.color = Color.yellow;
         }
 
-        rigidbody.gravityScale = 1;
+
+        if (Mathf.Approximately(Mathf.Abs(rigidbody.velocity.x), 0))
+            sprite.color = Color.red;
+        if (Mathf.Approximately(Mathf.Abs(rigidbody.velocity.x), maxSpeed))
+            sprite.color = Color.green;
+
+        print(Mathf.Abs(rigidbody.velocity.x)/maxSpeed);
+
+        //Jump
+        //if (Input.GetKeyDown(KeyCode.Space) && IsGrounded())
+        //{
+        //    rigidbody.velocity += Vector2.up * jumpVelocity;
+        //}
 
         // fall hard
         if (rigidbody.velocity.y < 0 && !IsGrounded())
@@ -58,22 +90,25 @@ public class PlayerController : MonoBehaviour
         {
             rigidbody.gravityScale = lowJumpGravityMultiplier;
         }
+
+        if (IsGrounded())
+            rigidbody.gravityScale = 1;
     }
 
     private bool IsGrounded()
     {
-        Color col;
+        //Color col;
         var check1 = Physics2D.Raycast(transform.position, -Vector2.up, collider.bounds.extents.y + groundCheckDist);
-        col = check1 ? Color.green : Color.red;
-        Debug.DrawRay(transform.position, -Vector3.up * (collider.bounds.extents.y + groundCheckDist), col);
+        //col = check1 ? Color.green : Color.red;
+        //Debug.DrawRay(transform.position, -Vector3.up * (collider.bounds.extents.y + groundCheckDist), col);
 
         var check2 = Physics2D.Raycast(transform.position + (transform.right * collider.bounds.extents.x), -Vector2.up, collider.bounds.extents.y + groundCheckDist);
-        col = check2 ? Color.green : Color.red;
-        Debug.DrawRay(transform.position + (transform.right * collider.bounds.extents.x), -Vector3.up * (collider.bounds.extents.y + groundCheckDist), col);
+        //col = check2 ? Color.green : Color.red;
+        //Debug.DrawRay(transform.position + (transform.right * collider.bounds.extents.x), -Vector3.up * (collider.bounds.extents.y + groundCheckDist), col);
 
         var check3 = Physics2D.Raycast(transform.position + (transform.right * -collider.bounds.extents.x), -Vector2.up, collider.bounds.extents.y + groundCheckDist);
-        col = check3 ? Color.green : Color.red;
-        Debug.DrawRay(transform.position + (transform.right * -collider.bounds.extents.x), -Vector3.up * (collider.bounds.extents.y + groundCheckDist), col);
+        //col = check3 ? Color.green : Color.red;
+        //Debug.DrawRay(transform.position + (transform.right * -collider.bounds.extents.x), -Vector3.up * (collider.bounds.extents.y + groundCheckDist), col);
 
         return check1 || check2 || check3;
     }
