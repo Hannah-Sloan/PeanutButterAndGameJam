@@ -10,8 +10,6 @@ public class PlayerController : MonoBehaviour
     private float groundCheckDist = 0.3f;
 
     [Header("Refs")]
-    [SerializeField] private SpriteRenderer sprite;
-
 
     [Space(10)]
 
@@ -48,12 +46,10 @@ public class PlayerController : MonoBehaviour
     {
         //Left Right
         float moveX = Input.GetAxis("Horizontal");
-        //Debug.DrawRay(transform.position, moveX * Vector2.right * maxSpeed, Color.blue);
 
-        if ((Mathf.Sign(rigidbody.velocity.x) == Mathf.Sign(moveX) || rigidbody.velocity.x == 0) && moveX != 0)
+        if ((Mathf.Sign(rigidbody.velocity.x) == Mathf.Sign(moveX) || Mathf.Approximately(rigidbody.velocity.x, 0)) && moveX != 0)
         {
-            rigidbody.velocity += Vector2.right * Mathf.Sign(rigidbody.velocity.x) * Mathf.Min(accelerateSpeed * Time.deltaTime, maxSpeed - Mathf.Abs(rigidbody.velocity.x));
-            sprite.color = Color.yellow;
+            rigidbody.velocity += Vector2.right * moveX * Mathf.Min(accelerateSpeed * Time.deltaTime, maxSpeed - Mathf.Abs(rigidbody.velocity.x));
         }
         else 
         {
@@ -61,23 +57,13 @@ public class PlayerController : MonoBehaviour
                 rigidbody.velocity = new Vector2(0, rigidbody.velocity.y);
             else
                 rigidbody.velocity += Vector2.right * -Mathf.Sign(rigidbody.velocity.x) * decelerateSpeed * Time.deltaTime;
-
-            sprite.color = Color.yellow;
         }
 
-
-        if (Mathf.Approximately(Mathf.Abs(rigidbody.velocity.x), 0))
-            sprite.color = Color.red;
-        if (Mathf.Approximately(Mathf.Abs(rigidbody.velocity.x), maxSpeed))
-            sprite.color = Color.green;
-
-        print(Mathf.Abs(rigidbody.velocity.x)/maxSpeed);
-
         //Jump
-        //if (Input.GetKeyDown(KeyCode.Space) && IsGrounded())
-        //{
-        //    rigidbody.velocity += Vector2.up * jumpVelocity;
-        //}
+        if (Input.GetKeyDown(KeyCode.Space) && IsGrounded())
+        {
+            rigidbody.velocity += Vector2.up * jumpVelocity;
+        }
 
         // fall hard
         if (rigidbody.velocity.y < 0 && !IsGrounded())
